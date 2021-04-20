@@ -38,6 +38,10 @@ dependencies {
 		exclude group: 'org.slf4j', module: 'slf4j-api'
 	}
 
+	api("org.eclipse.jetty.websocket:websocket-jetty-server:$jettyVersion") {
+		exclude group: 'org.slf4j', module: 'slf4j-api'
+	}
+
 	api("org.apache.logging.log4j:log4j-api:2.14.1")
 	api("org.apache.logging.log4j:log4j-core:2.14.1")
 	api("org.apache.logging.log4j:log4j-slf4j-impl:2.14.1")
