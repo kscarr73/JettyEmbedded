@@ -33,3 +33,123 @@ public class MainApplication {
 	}
 }
 ```
+
+# Logging
+
+A logger based on Log4j2 is setup.  You can configure to run using JSON by placing the following files in your ```src/main/resources``` folder.
+
+## log4j2.yaml
+```
+Configutation:
+  name: Default
+  Properties:
+    Property:
+      name: log-path
+      value: "logs"
+  Appenders:
+    Console:
+        - name: Console_Appender
+          target: SYSTEM_OUT
+          JsonTemplateLayout:
+            eventTemplateUri: classpath:JSONEventLayoutV1.json
+    
+        - name: Access_Appender
+          target: SYSTEM_OUT
+          JsonTemplateLayout:
+            eventTemplateUri: classpath:AccessEvents.json
+  Loggers:
+      Root:
+        level: info
+        AppenderRef:
+          - ref: Console_Appender
+      Logger:
+        - name: com.progbits.jetty.embedded.logging.JettyLogHandler
+          level: info
+          additivity: false
+          AppenderRef:
+            - ref: Access_Appender
+```
+
+## JSONEventLayoutV1.json  (ROOT Logger)
+```
+{
+	"mdc": {
+		"$resolver": "mdc"
+	},
+	"exception": {
+		"exception_class": {
+			"$resolver": "exception",
+			"field": "className"
+		},
+		"exception_message": {
+			"$resolver": "exception",
+			"field": "message"
+		},
+		"stacktrace": {
+			"$resolver": "exception",
+			"field": "stackTrace",
+			"stackTrace": {
+				"stringified": true
+			}
+		}
+	},
+	"line_number": {
+		"$resolver": "source",
+		"field": "lineNumber"
+	},
+	"class": {
+		"$resolver": "source",
+		"field": "className"
+	},
+	"@version": 1,
+	"source_host": "${hostName}",
+	"message": {
+		"$resolver": "message",
+		"stringified": true
+	},
+	"thread_name": {
+		"$resolver": "thread",
+		"field": "name"
+	},
+	"@timestamp": {
+		"$resolver": "timestamp"
+	},
+	"level": {
+		"$resolver": "level",
+		"field": "name"
+	},
+	"file": {
+		"$resolver": "source",
+		"field": "fileName"
+	},
+	"method": {
+		"$resolver": "source",
+		"field": "methodName"
+	},
+	"logger_name": {
+		"$resolver": "logger",
+		"field": "name"
+	}
+}
+```
+
+## AccessEvents.json (Access Events)
+```
+{
+	"clientip": "${clientip}",
+	"status": "${status}",
+	"length": "${length}",
+	"requestUri": "${requestUri}",
+	"speed": "${speed}",
+	"timestamp": {
+		"$resolver": "timestamp"
+	},
+	"method": "${method}",
+	"reqhost": "${reqhost}",
+	"reqproto": "${reqproto}",
+	"request": "${request}",
+	"sourceip": "${sourceip}",
+	"useragent": "${useragent}",
+	"flowid": "${flowid}"
+}
+```
