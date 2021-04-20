@@ -3,11 +3,15 @@ package com.progbits.jetty.embedded;
 import com.progbits.jetty.embedded.logging.JettyLogHandler;
 import jakarta.servlet.Servlet;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.websocket.core.server.WebSocketServerComponents;
+import org.eclipse.jetty.websocket.server.JettyWebSocketServlet;
+import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,12 +59,22 @@ public class JettyEmbedded {
 		_context = new ServletContextHandler();
 		_context.setContextPath(_contextPath);
 		
+		AtomicBoolean bWebsocket = new AtomicBoolean(false);
+		
 		if (_servlets != null) {
 			_servlets.forEach((k, v) -> { 
+				if (v instanceof JettyWebSocketServlet) {
+					bWebsocket.set(true);
+				}
+				
 				ServletHolder sh = new ServletHolder(v);
 				
 				_context.addServlet(sh, k);
 			});
+		}
+		
+		if (bWebsocket.get()) {
+			JettyWebSocketServletContainerInitializer.configure(_context, null);
 		}
 		
 		_server.setHandler(_context);
