@@ -1,5 +1,6 @@
 package com.progbits.jetty.embedded.logging;
 
+import java.util.Enumeration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.MapMessage;
@@ -29,15 +30,22 @@ public class JettyLogHandler implements RequestLog {
 				.with("reqhost", req.getLocalName())
 				.with("reqproto", req.getProtocol())
 				.with("request", String.format("%s %s%s %s", req.getMethod(), req.getRequestURI(), req.getQueryString() == null ? "" : "?" + req.getQueryString(), req.getProtocol()))
-				.with("sourceip", req.getLocalAddr())
-				.with("useragent", req.getHeader("user-agent"));
+				.with("sourceip", req.getLocalAddr());
+
+		for (Enumeration<?> e = req.getHeaderNames(); e.hasMoreElements();) {
+			String nextHeaderName = (String) e.nextElement();
+
+			if (!"authorization".equals(nextHeaderName)) {
+				msg.with("hdr_" + nextHeaderName, req.getHeader(nextHeaderName));
+			}
+		}
 
 		String mdcFlowId = MDC.get("X-FlowId");
-		
+
 		if (mdcFlowId != null) {
 			msg.with("flowid", mdcFlowId);
 		}
-		
+
 		log.info(msg);
 	}
 
