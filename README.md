@@ -136,20 +136,56 @@ Configutation:
 ## AccessEvents.json (Access Events)
 ```
 {
-	"clientip": "${clientip}",
-	"status": "${status}",
-	"length": "${length}",
-	"requestUri": "${requestUri}",
-	"speed": "${speed}",
-	"timestamp": {
-		"$resolver": "timestamp"
+    "clientip": {
+        "$resolver": "map",
+        "key": "clientip"
+    },
+    "status": {
+        "$resolver": "map",
+        "key": "status"
+    },
+    "length": {
+        "$resolver": "map",
+        "key": "length"
+    },
+    "requestUri": {
+        "$resolver": "map",
+        "key": "requestUri"
+    },
+    "speed": {
+        "$resolver": "map",
+        "key": "speed"
+    },
+    "timestamp": {
+		"$resolver": "timestamp",
+		"epoch": {
+			"unit": "secs",
+			"rounded": true
+		}
 	},
-	"method": "${method}",
-	"reqhost": "${reqhost}",
-	"reqproto": "${reqproto}",
-	"request": "${request}",
-	"sourceip": "${sourceip}",
-	"useragent": "${useragent}",
-	"flowid": "${flowid}"
+    "reqhost": {
+        "$resolver": "map",
+        "key": "reqhost"
+    },
+    "reqproto": {
+        "$resolver": "map",
+        "key": "reqproto"
+    },
+    "request": {
+        "$resolver": "map",
+        "key": "request"
+    },
+    "sourceip": {
+        "$resolver": "map",
+        "key": "sourceip"
+    },
+    "useragent": {
+        "$resolver": "map",
+        "key": "hdr_User-Agent"
+    },
+    "flowid": {
+        "$resolver": "mdc",
+        "key": "flowid"
+    }
 }
 ```
