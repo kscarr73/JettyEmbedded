@@ -11,6 +11,7 @@ import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -38,7 +39,12 @@ public class JettyEmbedded {
     private String _keyStoreFile;
     private String _keyStorePassword;
     private boolean _sniValidate = true;
-    
+
+    private String[] gzipIncludedMethods = null;
+    private String[] gzipIncludedMimeTypes = null;
+    private Integer gzipMinimumSize = null;
+    private String ignoreRequestLogRegEx = null;
+
     public JettyEmbedded() {
     }
 
@@ -71,31 +77,55 @@ public class JettyEmbedded {
 
     public JettyEmbedded setKeyStore(String keyStore) {
         _keyStoreFile = keyStore;
-        
+
         return this;
     }
-    
+
     public JettyEmbedded setKeyStorePassword(String keyStorePassword) {
         _keyStorePassword = keyStorePassword;
-        
+
         return this;
     }
-    
+
     public JettyEmbedded setSNIValidate(boolean sniValidate) {
         _sniValidate = sniValidate;
-        
+
         return this;
     }
-    
+
+    public JettyEmbedded setGZipIncludedMethods(String... methods) {
+        this.gzipIncludedMethods = methods;
+
+        return this;
+    }
+
+    public JettyEmbedded setGZipIncludedMimeTypes(String... methods) {
+        this.gzipIncludedMimeTypes = methods;
+
+        return this;
+    }
+
+    public JettyEmbedded setGZipMimumumSize(int minSize) {
+        this.gzipMinimumSize = minSize;
+
+        return this;
+    }
+
+    public JettyEmbedded setIgnoreRequestLogRegEx(String ignoreRegEx) {
+        this.ignoreRequestLogRegEx = ignoreRegEx;
+
+        return this;
+    }
+
     public JettyEmbedded build() {
         if (_keyStoreFile != null) {
             _server = new Server();
-            
+
             _server.addConnector(setupSslConnector(_server, _port));
         } else {
             _server = new Server(_port);
         }
-        
+
         _context = new ServletContextHandler();
         _context.setContextPath(_contextPath);
 
@@ -119,7 +149,7 @@ public class JettyEmbedded {
 
         _server.setHandler(_context);
 
-        _server.setRequestLog(new JettyLogHandler());
+        _server.setRequestLog(new JettyLogHandler(ignoreRequestLogRegEx));
 
         try {
             _server.start();
@@ -133,12 +163,12 @@ public class JettyEmbedded {
     public JettyEmbedded buildWebApp(SecurityHandler securityHandler, SessionHandler sessionHandler) {
         if (_keyStoreFile != null) {
             _server = new Server();
-            
+
             _server.addConnector(setupSslConnector(_server, _port));
         } else {
             _server = new Server(_port);
         }
-        
+
         _context = new ServletContextHandler();
         _context.setContextPath(_contextPath);
 
@@ -153,7 +183,7 @@ public class JettyEmbedded {
         }
 
         _context.getSessionHandler().setMaxInactiveInterval(_maxSessionTimeout);
-        
+
         AtomicBoolean bWebsocket = new AtomicBoolean(false);
 
         if (_servlets != null) {
@@ -172,7 +202,15 @@ public class JettyEmbedded {
             JettyWebSocketServletContainerInitializer.configure(_context, null);
         }
 
-        _server.setHandler(_context);
+        GzipHandler gzipHandler = setupGzipHandler();
+
+        if (gzipHandler == null) {
+            _server.setHandler(_context);
+        } else {
+            gzipHandler.setHandler(_context);
+
+            _server.setHandler(gzipHandler);
+        }
 
         _server.setRequestLog(new JettyLogHandler());
 
@@ -188,23 +226,45 @@ public class JettyEmbedded {
     public void waitForInterrupt() throws InterruptedException {
         _server.join();
     }
-    
+
     private ServerConnector setupSslConnector(Server server, Integer iPort) {
         HttpConfiguration httpConfig = new HttpConfiguration();
         httpConfig.addCustomizer(new SecureRequestCustomizer(_sniValidate));
-        
+
         HttpConnectionFactory http11 = new HttpConnectionFactory(httpConfig);
-        
+
         SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
         sslContextFactory.setKeyStorePath(_keyStoreFile);
         sslContextFactory.setKeyStorePassword(_keyStorePassword);
-        
+
         SslConnectionFactory tls = new SslConnectionFactory(sslContextFactory, http11.getProtocol());
-        
+
         ServerConnector connector = new ServerConnector(server, tls, http11);
-        
+
         connector.setPort(iPort);
-        
+
         return connector;
+    }
+
+    private GzipHandler setupGzipHandler() {
+        if (gzipIncludedMethods != null || gzipIncludedMimeTypes != null || gzipMinimumSize != null) {
+            GzipHandler gzipHandler = new GzipHandler();
+
+            if (gzipIncludedMethods != null) {
+                gzipHandler.setIncludedMethods(gzipIncludedMethods);
+            }
+
+            if (gzipIncludedMimeTypes != null) {
+                gzipHandler.setIncludedMimeTypes(gzipIncludedMimeTypes);
+            }
+
+            if (gzipMinimumSize != null) {
+                gzipHandler.setMinGzipSize(gzipMinimumSize);
+            }
+
+            return gzipHandler;
+        } else {
+            return null;
+        }
     }
 }

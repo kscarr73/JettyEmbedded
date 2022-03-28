@@ -8,14 +8,14 @@ repositories {
     mavenLocal()
     mavenCentral()
 
-	maven {
-			name = 'progbits'
-			url = "https://archiva.progbits.com/coffer/repository/internal"
+    maven {
+        name = 'progbits'
+        url = "https://archiva.progbits.com/coffer/repository/internal"
     }
 }
 
 ext {
-	jettyVersion = '11.0.6'
+	jettyVersion = '11.0.8'
 }
 
 dependencies {
@@ -40,7 +40,7 @@ dependencies {
 	api("org.apache.logging.log4j:log4j-layout-template-json:2.17.1")
 	api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.0")
 	api("com.fasterxml.jackson.core:jackson-databind:2.13.0")
-	api("org.slf4j:slf4j-api:1.7.32")
+	api("org.slf4j:slf4j-api:1.7.36")
 	
 }
 
@@ -72,9 +72,9 @@ publishing {
 
 	repositories {
         maven {
-			name = 'progbits'
-			url = "https://archiva.progbits.com/coffer/repository/internal"
-			credentials(PasswordCredentials)
+            name = 'progbits'
+            url = "https://archiva.progbits.com/coffer/repository/internal"
+            credentials(PasswordCredentials)
         }
     }
 }
