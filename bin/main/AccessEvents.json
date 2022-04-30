@@ -1,0 +1,17 @@
+{
+	"clientip": "${clientip}",
+	"status": "${status}",
+	"length": "${length}",
+	"requestUri": "${requestUri}",
+	"speed": "${speed}",
+	"timestamp": {
+		"$resolver": "timestamp"
+	},
+	"method": "${method}",
+	"reqhost": "${reqhost}",
+	"reqproto": "${reqproto}",
+	"request": "${request}",
+	"sourceip": "${sourceip}",
+	"useragent": "${useragent}",
+	"flowid": "${flowid}"
+}

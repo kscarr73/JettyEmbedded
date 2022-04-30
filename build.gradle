@@ -15,7 +15,7 @@ repositories {
 }
 
 ext {
-	jettyVersion = '11.0.8'
+	jettyVersion = '11.0.9'
 }
 
 dependencies {

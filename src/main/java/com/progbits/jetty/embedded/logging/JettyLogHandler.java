@@ -37,7 +37,7 @@ public class JettyLogHandler implements RequestLog {
                 .with("timestamp", req.getTimeStamp())
                 .with("method", req.getMethod())
                 .with("clientip", req.getRemoteAddr())
-                .with("reqhost", req.getLocalName())
+                .with("reqhost", req.getLocalName() == null ? "" : req.getLocalName())
                 .with("reqproto", req.getProtocol())
                 .with("request", String.format("%s %s%s %s", req.getMethod(), req.getRequestURI(), req.getQueryString() == null ? "" : "?" + req.getQueryString(), req.getProtocol()))
                 .with("sourceip", req.getLocalAddr());
