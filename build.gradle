@@ -25,7 +25,7 @@ ext {
 
 dependencies {
     // Use TestNG framework, also requires calling test.useTestNG() below
-    testImplementation 'org.testng:testng:7.5'
+    testImplementation 'org.testng:testng:7.6.1'
 
     api("org.eclipse.jetty:jetty-server:$jettyVersion") {
 		exclude group: 'org.slf4j', module: 'slf4j-api'
