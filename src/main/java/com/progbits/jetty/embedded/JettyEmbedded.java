@@ -2,6 +2,7 @@ package com.progbits.jetty.embedded;
 
 import com.progbits.jetty.embedded.logging.JettyLogHandler;
 import jakarta.servlet.Servlet;
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.eclipse.jetty.security.SecurityHandler;
@@ -45,6 +46,11 @@ public class JettyEmbedded {
     private Integer gzipMinimumSize = null;
     private String ignoreRequestLogRegEx = null;
 
+    private Map<String, Class> webSockets = null;
+    
+    private Long webSocket_MessageSize = 65535L;
+    private Long webSocket_IdleTimeout = 10000L;
+    
     public JettyEmbedded() {
     }
 
@@ -69,6 +75,23 @@ public class JettyEmbedded {
         return this;
     }
 
+    public JettyEmbedded setWebSockets(Map<String, Class> sockets) {
+        webSockets = sockets;
+
+        return this;
+    }
+    
+    public JettyEmbedded setWebSocketIdle(Long idleTimeout) {
+        webSocket_IdleTimeout = idleTimeout;
+        
+        return this;
+    }
+    
+    public JettyEmbedded setWebSocketMessageSize(Long messageSize) {
+        webSocket_MessageSize = messageSize;
+        
+        return this;
+    }
     public JettyEmbedded setMaxSessionTimeout(Integer timeoutInSeconds) {
         this._maxSessionTimeout = timeoutInSeconds;
 
@@ -129,22 +152,25 @@ public class JettyEmbedded {
         _context = new ServletContextHandler();
         _context.setContextPath(_contextPath);
 
-        AtomicBoolean bWebsocket = new AtomicBoolean(false);
-
         if (_servlets != null) {
             _servlets.forEach((k, v) -> {
-                if (v instanceof JettyWebSocketServlet) {
-                    bWebsocket.set(true);
-                }
-
                 ServletHolder sh = new ServletHolder(v);
 
                 _context.addServlet(sh, k);
             });
         }
 
-        if (bWebsocket.get()) {
-            JettyWebSocketServletContainerInitializer.configure(_context, null);
+        if (webSockets != null) {
+            final Map<String, Class> localWebSockets = webSockets;
+            
+            JettyWebSocketServletContainerInitializer.configure(_context, (serlvetContext, wsContainer) -> {
+                wsContainer.setIdleTimeout(Duration.ofMillis(webSocket_IdleTimeout));
+                wsContainer.setMaxTextMessageSize(webSocket_MessageSize);
+                
+                for (var entry : localWebSockets.entrySet()) {
+                    wsContainer.addMapping(entry.getKey(), entry.getValue());
+                }
+            });
         }
 
         _server.setHandler(_context);

@@ -24,7 +24,9 @@ public class JettyLogHandler implements RequestLog {
     }
 
     public JettyLogHandler(String ignoreRegEx) {
-        _ignoreRegEx = Pattern.compile(ignoreRegEx);
+        if (ignoreRegEx != null) {
+            _ignoreRegEx = Pattern.compile(ignoreRegEx);
+        }
     }
 
     @Override

@@ -2,8 +2,8 @@ plugins {
     // Apply the java-library plugin for API and implementation separation.
     id 'java-library'
     id 'maven-publish'
-    id "org.owasp.dependencycheck" version "7.1.0.1"
-    id "com.github.ben-manes.versions" version "0.42.0"
+    id "org.owasp.dependencycheck" version "7.2.1"
+    id "com.github.ben-manes.versions" version "0.43.0"
 }
 
 repositories {
@@ -17,8 +17,8 @@ repositories {
 }
 
 ext {
-	jettyVersion = '11.0.11'
-	log4jVersion = '2.18.0'
+	jettyVersion = '11.0.12'
+	log4jVersion = '2.19.0'
 	jacksonDataBind = '2.13.3'
 	jacksonDataFormat = '2.13.3'
 }
@@ -45,7 +45,7 @@ dependencies {
 	api("org.apache.logging.log4j:log4j-layout-template-json:$log4jVersion")
 	api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jacksonDataFormat")
 	api("com.fasterxml.jackson.core:jackson-databind:$jacksonDataBind")
-	api("org.slf4j:slf4j-api:1.7.36")
+	api("org.slf4j:slf4j-api:2.0.3")
 	
 }
 
