@@ -2,8 +2,8 @@ plugins {
     // Apply the java-library plugin for API and implementation separation.
     id 'java-library'
     id 'maven-publish'
-    id "org.owasp.dependencycheck" version "7.2.1"
-    id "com.github.ben-manes.versions" version "0.43.0"
+    id "org.owasp.dependencycheck" version "7.4.1"
+    id "com.github.ben-manes.versions" version "0.44.0"
 }
 
 repositories {
@@ -19,13 +19,13 @@ repositories {
 ext {
 	jettyVersion = '11.0.12'
 	log4jVersion = '2.19.0'
-	jacksonDataBind = '2.13.3'
-	jacksonDataFormat = '2.13.3'
+	jacksonDataBind = '2.14.1'
+	jacksonDataFormat = '2.14.1'
 }
 
 dependencies {
     // Use TestNG framework, also requires calling test.useTestNG() below
-    testImplementation 'org.testng:testng:7.6.1'
+    testImplementation 'org.testng:testng:7.7.0'
 
     api("org.eclipse.jetty:jetty-server:$jettyVersion") {
 		exclude group: 'org.slf4j', module: 'slf4j-api'
