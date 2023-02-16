@@ -1,11 +1,9 @@
 package com.progbits.jetty.embedded;
 
 import com.progbits.jetty.embedded.logging.JettyLogHandler;
-import jakarta.servlet.DispatcherType;
-import jakarta.servlet.Filter;
 import jakarta.servlet.Servlet;
 import java.time.Duration;
-import java.util.EnumSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,6 +38,7 @@ public class JettyEmbedded {
 
     private List<FilterSet> _filters = null;
     private Map<String, Servlet> _servlets;
+    private List<ServletSet> _servletSet;
     private int _port = 8080;
     private String _contextPath;
     private Integer _maxSessionTimeout = 14400;
@@ -81,8 +80,18 @@ public class JettyEmbedded {
         return this;
     }
     
+    @Deprecated
+    /**
+     * Use setServlets(List<ServletSet>) instead.
+     */
     public JettyEmbedded setServlets(Map<String, Servlet> servlets) {
         _servlets = servlets;
+
+        return this;
+    }
+    
+    public JettyEmbedded setServlets(List<ServletSet> servletSet) {
+        _servletSet = servletSet;
 
         return this;
     }
@@ -177,13 +186,25 @@ public class JettyEmbedded {
         }
         
         if (_servlets != null) {
+            if (_servletSet == null) {
+                _servletSet = new ArrayList<>();
+            }
             _servlets.forEach((k, v) -> {
-                ServletHolder sh = new ServletHolder(v);
-
-                _context.addServlet(sh, k);
+                _servletSet.add(new ServletSet(v, k, null));
             });
         }
 
+        if (_servletSet != null) {
+            _servletSet.forEach((srvlet) -> { 
+                ServletHolder sh = new ServletHolder(srvlet.getServlet());
+
+                if (srvlet.getInitParams() != null) {
+                    sh.setInitParameters(srvlet.getInitParams());
+                }
+                
+                _context.addServlet(sh, srvlet.getPath());
+            });
+        }
         if (webSockets != null) {
             final Map<String, Class> localWebSockets = webSockets;
             
