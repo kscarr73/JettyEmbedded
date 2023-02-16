@@ -1,6 +1,7 @@
 package com.progbits.jetty.embedded;
 
 import jakarta.servlet.Servlet;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -16,6 +17,11 @@ public class ServletSet {
     public ServletSet() {
     }
 
+    public ServletSet(String path, Servlet servlet) {
+        this.servlet = servlet;
+        this.path = path;
+    }
+    
     public ServletSet(Servlet servlet, String path, Map<String, String> initParams) {
         this.servlet = servlet;
         this.path = path;
@@ -40,6 +46,16 @@ public class ServletSet {
         return this;
     }
 
+    public ServletSet addInitParam(String key, String value) {
+        if (initParams == null) {
+            initParams = new HashMap<>();
+        }
+        
+        initParams.put(key, value);
+        
+        return this;
+    }
+    
     public Servlet getServlet() {
         return servlet;
     }
