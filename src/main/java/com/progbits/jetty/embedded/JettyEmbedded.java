@@ -1,8 +1,12 @@
 package com.progbits.jetty.embedded;
 
 import com.progbits.jetty.embedded.logging.JettyLogHandler;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Filter;
 import jakarta.servlet.Servlet;
 import java.time.Duration;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.eclipse.jetty.security.SecurityHandler;
@@ -14,6 +18,7 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.server.session.SessionHandler;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -33,6 +38,7 @@ public class JettyEmbedded {
     private Server _server;
     private ServletContextHandler _context;
 
+    private List<FilterSet> _filters = null;
     private Map<String, Servlet> _servlets;
     private int _port = 8080;
     private String _contextPath;
@@ -69,6 +75,12 @@ public class JettyEmbedded {
         return this;
     }
 
+    public JettyEmbedded setFilters(List<FilterSet> filters) {
+        _filters = filters;
+        
+        return this;
+    }
+    
     public JettyEmbedded setServlets(Map<String, Servlet> servlets) {
         _servlets = servlets;
 
@@ -152,6 +164,18 @@ public class JettyEmbedded {
         _context = new ServletContextHandler();
         _context.setContextPath(_contextPath);
 
+        if (_filters != null) {
+            _filters.forEach((filter) -> { 
+                FilterHolder fh = new FilterHolder(filter.getFilter());
+                
+                if (filter.getInitParams() != null) {
+                    fh.setInitParameters(filter.getInitParams());
+                }
+                
+                _context.addFilter(fh, filter.getPath(), filter.getTypes());
+            });
+        }
+        
         if (_servlets != null) {
             _servlets.forEach((k, v) -> {
                 ServletHolder sh = new ServletHolder(v);
