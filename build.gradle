@@ -18,7 +18,7 @@ repositories {
 
 ext {
 	jettyVersion = '11.0.14'
-	log4jVersion = '2.19.0'
+	log4jVersion = '2.20.0'
 	jacksonDataBind = '2.14.2'
 	jacksonDataFormat = '2.14.2'
 }
