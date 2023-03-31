@@ -17,7 +17,7 @@ repositories {
 }
 
 ext {
-	jettyVersion = '11.0.13'
+	jettyVersion = '11.0.14'
 	log4jVersion = '2.19.0'
 	jacksonDataBind = '2.14.2'
 	jacksonDataFormat = '2.14.2'
@@ -63,8 +63,8 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             artifactId = "$artifactId"
-            from components.java
-            versionMapping {
+            from components.java 
+           versionMapping {
                 usage('java-api') {
                     fromResolutionOf('runtimeClasspath')
                 }

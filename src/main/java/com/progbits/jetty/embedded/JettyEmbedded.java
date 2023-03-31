@@ -6,7 +6,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -20,7 +19,6 @@ import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.eclipse.jetty.websocket.server.JettyWebSocketServlet;
 import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,10 +50,10 @@ public class JettyEmbedded {
     private String ignoreRequestLogRegEx = null;
 
     private Map<String, Class> webSockets = null;
-    
+
     private Long webSocket_MessageSize = 65535L;
     private Long webSocket_IdleTimeout = 10000L;
-    
+
     public JettyEmbedded() {
     }
 
@@ -76,10 +74,10 @@ public class JettyEmbedded {
 
     public JettyEmbedded setFilters(List<FilterSet> filters) {
         _filters = filters;
-        
+
         return this;
     }
-    
+
     @Deprecated
     /**
      * Use setServlets(List<ServletSet>) instead.
@@ -89,7 +87,7 @@ public class JettyEmbedded {
 
         return this;
     }
-    
+
     public JettyEmbedded setServlets(List<ServletSet> servletSet) {
         _servletSet = servletSet;
 
@@ -101,18 +99,19 @@ public class JettyEmbedded {
 
         return this;
     }
-    
+
     public JettyEmbedded setWebSocketIdle(Long idleTimeout) {
         webSocket_IdleTimeout = idleTimeout;
-        
+
         return this;
     }
-    
+
     public JettyEmbedded setWebSocketMessageSize(Long messageSize) {
         webSocket_MessageSize = messageSize;
-        
+
         return this;
     }
+
     public JettyEmbedded setMaxSessionTimeout(Integer timeoutInSeconds) {
         this._maxSessionTimeout = timeoutInSeconds;
 
@@ -162,86 +161,17 @@ public class JettyEmbedded {
     }
 
     public JettyEmbedded build() {
-        if (_keyStoreFile != null) {
-            _server = new Server();
+        setupServer();
 
-            _server.addConnector(setupSslConnector(_server, _port));
-        } else {
-            _server = new Server(_port);
-        }
+        setupContext();
 
-        _context = new ServletContextHandler();
-        _context.setContextPath(_contextPath);
-
-        if (_filters != null) {
-            _filters.forEach((filter) -> { 
-                FilterHolder fh = new FilterHolder(filter.getFilter());
-                
-                if (filter.getInitParams() != null) {
-                    fh.setInitParameters(filter.getInitParams());
-                }
-                
-                _context.addFilter(fh, filter.getPath(), filter.getTypes());
-            });
-        }
-        
-        if (_servlets != null) {
-            if (_servletSet == null) {
-                _servletSet = new ArrayList<>();
-            }
-            _servlets.forEach((k, v) -> {
-                _servletSet.add(new ServletSet(v, k, null));
-            });
-        }
-
-        if (_servletSet != null) {
-            _servletSet.forEach((srvlet) -> { 
-                ServletHolder sh = new ServletHolder(srvlet.getServlet());
-
-                if (srvlet.getInitParams() != null) {
-                    sh.setInitParameters(srvlet.getInitParams());
-                }
-                
-                _context.addServlet(sh, srvlet.getPath());
-            });
-        }
-        if (webSockets != null) {
-            final Map<String, Class> localWebSockets = webSockets;
-            
-            JettyWebSocketServletContainerInitializer.configure(_context, (serlvetContext, wsContainer) -> {
-                wsContainer.setIdleTimeout(Duration.ofMillis(webSocket_IdleTimeout));
-                wsContainer.setMaxTextMessageSize(webSocket_MessageSize);
-                
-                for (var entry : localWebSockets.entrySet()) {
-                    wsContainer.addMapping(entry.getKey(), entry.getValue());
-                }
-            });
-        }
-
-        _server.setHandler(_context);
-
-        _server.setRequestLog(new JettyLogHandler(ignoreRequestLogRegEx));
-
-        try {
-            _server.start();
-        } catch (Exception ex) {
-            log.error("Server Configuration Failed", ex);
-        }
+        startServer();
 
         return this;
     }
 
     public JettyEmbedded buildWebApp(SecurityHandler securityHandler, SessionHandler sessionHandler) {
-        if (_keyStoreFile != null) {
-            _server = new Server();
-
-            _server.addConnector(setupSslConnector(_server, _port));
-        } else {
-            _server = new Server(_port);
-        }
-
-        _context = new ServletContextHandler();
-        _context.setContextPath(_contextPath);
+        setupServer();
 
         if (securityHandler != null) {
             _context.setSecurityHandler(securityHandler);
@@ -255,41 +185,9 @@ public class JettyEmbedded {
 
         _context.getSessionHandler().setMaxInactiveInterval(_maxSessionTimeout);
 
-        AtomicBoolean bWebsocket = new AtomicBoolean(false);
+        setupContext();
 
-        if (_servlets != null) {
-            _servlets.forEach((k, v) -> {
-                if (v instanceof JettyWebSocketServlet) {
-                    bWebsocket.set(true);
-                }
-
-                ServletHolder sh = new ServletHolder(v);
-
-                _context.addServlet(sh, k);
-            });
-        }
-
-        if (bWebsocket.get()) {
-            JettyWebSocketServletContainerInitializer.configure(_context, null);
-        }
-
-        GzipHandler gzipHandler = setupGzipHandler();
-
-        if (gzipHandler == null) {
-            _server.setHandler(_context);
-        } else {
-            gzipHandler.setHandler(_context);
-
-            _server.setHandler(gzipHandler);
-        }
-
-        _server.setRequestLog(new JettyLogHandler());
-
-        try {
-            _server.start();
-        } catch (Exception ex) {
-            log.error("Server Configuration Failed", ex);
-        }
+        startServer();
 
         return this;
     }
@@ -336,6 +234,87 @@ public class JettyEmbedded {
             return gzipHandler;
         } else {
             return null;
+        }
+    }
+
+    private void setupServer() {
+        if (_keyStoreFile != null) {
+            _server = new Server();
+
+            _server.addConnector(setupSslConnector(_server, _port));
+        } else {
+            _server = new Server(_port);
+        }
+
+        _context = new ServletContextHandler();
+        _context.setContextPath(_contextPath);
+    }
+
+    private void setupContext() {
+        if (_filters != null) {
+            _filters.forEach((filter) -> {
+                FilterHolder fh = new FilterHolder(filter.getFilter());
+
+                if (filter.getInitParams() != null) {
+                    fh.setInitParameters(filter.getInitParams());
+                }
+
+                _context.addFilter(fh, filter.getPath(), filter.getTypes());
+            });
+        }
+
+        if (_servlets != null) {
+            if (_servletSet == null) {
+                _servletSet = new ArrayList<>();
+            }
+            _servlets.forEach((k, v) -> {
+                _servletSet.add(new ServletSet(v, k, null));
+            });
+        }
+
+        if (_servletSet != null) {
+            _servletSet.forEach((srvlet) -> {
+                ServletHolder sh = new ServletHolder(srvlet.getServlet());
+
+                if (srvlet.getInitParams() != null) {
+                    sh.setInitParameters(srvlet.getInitParams());
+                }
+
+                _context.addServlet(sh, srvlet.getPath());
+            });
+        }
+
+        if (webSockets != null) {
+            final Map<String, Class> localWebSockets = webSockets;
+
+            JettyWebSocketServletContainerInitializer.configure(_context, (serlvetContext, wsContainer) -> {
+                wsContainer.setIdleTimeout(Duration.ofMillis(webSocket_IdleTimeout));
+                wsContainer.setMaxTextMessageSize(webSocket_MessageSize);
+
+                for (var entry : localWebSockets.entrySet()) {
+                    wsContainer.addMapping(entry.getKey(), entry.getValue());
+                }
+            });
+        }
+    }
+
+    private void startServer() {
+        GzipHandler gzipHandler = setupGzipHandler();
+
+        if (gzipHandler == null) {
+            _server.setHandler(_context);
+        } else {
+            gzipHandler.setHandler(_context);
+
+            _server.setHandler(gzipHandler);
+        }
+
+        _server.setRequestLog(new JettyLogHandler());
+
+        try {
+            _server.start();
+        } catch (Exception ex) {
+            log.error("Server Configuration Failed", ex);
         }
     }
 }
