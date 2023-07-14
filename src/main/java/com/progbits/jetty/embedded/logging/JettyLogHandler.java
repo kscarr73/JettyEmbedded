@@ -1,6 +1,7 @@
 package com.progbits.jetty.embedded.logging;
 
 import java.util.Enumeration;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,7 +21,26 @@ public class JettyLogHandler implements RequestLog {
 
     private Pattern _ignoreRegEx;
 
+    private static final LinkedBlockingQueue<MapMessage> logEntries = new LinkedBlockingQueue<>();
+
+    private Thread logProcessor;
+
     public JettyLogHandler() {
+        logProcessor = new Thread(() -> {
+            while (true) {
+                try {
+                    MapMessage msg = logEntries.take();
+
+                    log.info(msg);
+                } catch (InterruptedException iex) {
+                    // Nothing really to do here
+                }
+            }
+        });
+        
+        logProcessor.setDaemon(true);
+        logProcessor.setName("AccessLogProcessor-1");
+        logProcessor.start();
     }
 
     public JettyLogHandler(String ignoreRegEx) {
@@ -59,7 +79,7 @@ public class JettyLogHandler implements RequestLog {
         }
 
         if (_ignoreRegEx == null || !_ignoreRegEx.matcher(req.getRequestURI()).matches()) {
-            log.info(msg);
+            logEntries.add(msg);
         }
     }
 

@@ -19,6 +19,7 @@ import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.websocket.api.WebSocketContainer;
 import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +54,8 @@ public class JettyEmbedded {
 
     private Long webSocket_MessageSize = 65535L;
     private Long webSocket_IdleTimeout = 10000L;
+    
+    private WebSocketContainer webSocketContainer = null;
 
     public JettyEmbedded() {
     }
@@ -61,6 +64,14 @@ public class JettyEmbedded {
         return new JettyEmbedded();
     }
 
+    public WebSocketContainer getWebSocketContainer() {
+        return webSocketContainer;
+    }
+    
+    public Server getJettyServer() {
+        return _server;
+    }
+    
     public JettyEmbedded setContextPath(String contextPath) {
         _contextPath = contextPath;
 
@@ -288,6 +299,8 @@ public class JettyEmbedded {
             final Map<String, Class> localWebSockets = webSockets;
 
             JettyWebSocketServletContainerInitializer.configure(_context, (serlvetContext, wsContainer) -> {
+                webSocketContainer = wsContainer;
+                
                 wsContainer.setIdleTimeout(Duration.ofMillis(webSocket_IdleTimeout));
                 wsContainer.setMaxTextMessageSize(webSocket_MessageSize);
 
