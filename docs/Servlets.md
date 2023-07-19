@@ -23,12 +23,12 @@ public class WebController extends HttpServlet {
 	@Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		try {
-		    switch (req.getMethod() + " " + req.getRequestURI()) {
-			    case "GET " + ALIAS + "/healthcheck" -> {
-                    resp.setStatus(200);
-                    resp.getWriter().append("Ok");
-                }
-		    }
+			switch (req.getMethod() + " " + req.getRequestURI()) {
+				case "GET " + ALIAS + "/healthcheck" -> {
+					resp.setStatus(200);
+					resp.getWriter().append("Ok");
+				}
+			}
 		} catch (Exception ex) {
 			resp.setStatus(500);
 			resp.getWriter().append(ex.getMessage);
