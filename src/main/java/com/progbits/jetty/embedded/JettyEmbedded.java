@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -18,6 +19,7 @@ import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.VirtualThreads;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.websocket.api.WebSocketContainer;
@@ -56,9 +58,10 @@ public class JettyEmbedded {
 
     private Long webSocket_MessageSize = 65535L;
     private Long webSocket_IdleTimeout = 10000L;
-    
+
     private WebSocketContainer webSocketContainer = null;
     private QueuedThreadPool queuedThreadPool = null;
+    private boolean useVirtualThreads = false;
 
     public JettyEmbedded() {
     }
@@ -70,11 +73,26 @@ public class JettyEmbedded {
     public WebSocketContainer getWebSocketContainer() {
         return webSocketContainer;
     }
-    
+
     public Server getJettyServer() {
         return _server;
     }
-    
+
+    public JettyEmbedded useVirtualThreads() {
+        queuedThreadPool = new QueuedThreadPool();
+
+        Executor executor = VirtualThreads.getDefaultVirtualThreadsExecutor();
+
+        if (executor == null) {
+            log.info("Virtual Threads Not Available");
+        } else {
+            log.info("Virtual Threads Used");
+            queuedThreadPool.setVirtualThreadsExecutor(executor);
+        }
+
+        return this;
+    }
+
     public JettyEmbedded setContextPath(String contextPath) {
         _contextPath = contextPath;
 
@@ -122,10 +140,10 @@ public class JettyEmbedded {
 
     public JettyEmbedded setIdleTimeout(Long idleTimeout) {
         _idleTimeout = idleTimeout;
-        
+
         return this;
     }
-    
+
     public JettyEmbedded setWebSocketMessageSize(Long messageSize) {
         webSocket_MessageSize = messageSize;
 
@@ -180,6 +198,12 @@ public class JettyEmbedded {
         return this;
     }
 
+    public JettyEmbedded setQueuedThreadPool(QueuedThreadPool queuedThreadPool) {
+        this.queuedThreadPool = queuedThreadPool;
+
+        return this;
+    }
+
     public JettyEmbedded build() {
         setupServer();
 
@@ -219,22 +243,22 @@ public class JettyEmbedded {
     private ServerConnector setupHttpConnector(Server server, Integer iPort) {
         HttpConfiguration httpConfig = new HttpConfiguration();
         httpConfig.setIdleTimeout(_idleTimeout);
-        
+
         HttpConnectionFactory http11 = new HttpConnectionFactory(httpConfig);
-        
+
         ServerConnector connector = new ServerConnector(server, http11);
-        
+
         connector.setPort(iPort);
-        
+
         return connector;
     }
-    
+
     private ServerConnector setupSslConnector(Server server, Integer iPort) {
         HttpConfiguration httpConfig = new HttpConfiguration();
         httpConfig.addCustomizer(new SecureRequestCustomizer(_sniValidate));
 
         httpConfig.setIdleTimeout(_idleTimeout);
-        
+
         HttpConnectionFactory http11 = new HttpConnectionFactory(httpConfig);
 
         SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
@@ -328,7 +352,7 @@ public class JettyEmbedded {
 
             JettyWebSocketServletContainerInitializer.configure(_context, (serlvetContext, wsContainer) -> {
                 webSocketContainer = wsContainer;
-                
+
                 wsContainer.setIdleTimeout(Duration.ofMillis(webSocket_IdleTimeout));
                 wsContainer.setMaxTextMessageSize(webSocket_MessageSize);
 
@@ -350,7 +374,7 @@ public class JettyEmbedded {
             _server.setHandler(gzipHandler);
         }
 
-        _server.setRequestLog(new JettyLogHandler());
+        _server.setRequestLog(new JettyLogHandler(ignoreRequestLogRegEx));
 
         try {
             _server.start();
