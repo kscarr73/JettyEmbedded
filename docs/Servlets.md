@@ -64,13 +64,9 @@ public class WebController extends HttpServlet {
         servletRoutes.processRoutes(req, resp);
     }
 
-    private void handleApi(HttpServletRequest req, HttpServletResponse resp) {
-        try {
-            resp.setStatus(200);
-            resp.getWriter().append("Hello World");
-        } catch (IOException io) {
-            resp.setStatus(404);
-        }
+    private void handleApi(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        resp.setStatus(200);
+        resp.getWriter().append("Hello World");
     }
 
 }
