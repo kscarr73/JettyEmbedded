@@ -63,7 +63,7 @@ public class JettyEmbedded {
 
     private WebSocketContainer webSocketContainer = null;
     private QueuedThreadPool queuedThreadPool = null;
-    
+
     public JettyEmbedded() {
     }
 
@@ -207,20 +207,20 @@ public class JettyEmbedded {
 
     /**
      * Setup a Router Servlet that processes Routes.
-     * 
+     *
      * @param routes Routes to process
      * @return JettyEmbedded this instance
      */
-    public JettyEmbedded useServletRoutes(ServletRoutes routes) {
+    public JettyEmbedded useServletRoutes(ServletRoutes... routes) {
         if (_servletSet == null) {
             _servletSet = new ArrayList<>();
         }
-        
+
         _servletSet.add(new ServletSet("/*", new RouteController(routes)));
-        
+
         return this;
     }
-    
+
     public JettyEmbedded build() {
         setupServer();
 

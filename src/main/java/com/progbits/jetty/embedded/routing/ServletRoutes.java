@@ -8,5 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
  * @author scarr
  */
 public interface ServletRoutes {
-    void processRoutes(HttpServletRequest req, HttpServletResponse resp);
+
+    boolean processRoutes(HttpServletRequest req, HttpServletResponse resp);
+
 }

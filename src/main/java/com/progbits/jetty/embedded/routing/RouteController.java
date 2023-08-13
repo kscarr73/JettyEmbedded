@@ -11,14 +11,19 @@ import java.io.IOException;
  * @author scarr
  */
 public class RouteController extends HttpServlet {
-    private ServletRoutes router;
-    
-    public RouteController(ServletRoutes router) {
+
+    private ServletRoutes[] router;
+
+    public RouteController(ServletRoutes... router) {
         this.router = router;
     }
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        router.processRoutes(req, resp);
+        for (var entry : router) {
+            if (entry.processRoutes(req, resp)) {
+                break;
+            }
+        }
     }
 }
