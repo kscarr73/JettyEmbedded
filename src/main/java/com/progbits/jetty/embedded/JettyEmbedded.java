@@ -1,6 +1,8 @@
 package com.progbits.jetty.embedded;
 
 import com.progbits.jetty.embedded.logging.JettyLogHandler;
+import com.progbits.jetty.embedded.routing.RouteController;
+import com.progbits.jetty.embedded.routing.ServletRoutes;
 import jakarta.servlet.Servlet;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -61,8 +63,7 @@ public class JettyEmbedded {
 
     private WebSocketContainer webSocketContainer = null;
     private QueuedThreadPool queuedThreadPool = null;
-    private boolean useVirtualThreads = false;
-
+    
     public JettyEmbedded() {
     }
 
@@ -204,6 +205,22 @@ public class JettyEmbedded {
         return this;
     }
 
+    /**
+     * Setup a Router Servlet that processes Routes.
+     * 
+     * @param routes Routes to process
+     * @return JettyEmbedded this instance
+     */
+    public JettyEmbedded useServletRoutes(ServletRoutes routes) {
+        if (_servletSet == null) {
+            _servletSet = new ArrayList<>();
+        }
+        
+        _servletSet.add(new ServletSet("/*", new RouteController(routes)));
+        
+        return this;
+    }
+    
     public JettyEmbedded build() {
         setupServer();
 
