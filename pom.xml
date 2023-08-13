@@ -16,6 +16,14 @@
         <jacksonDataBind>2.14.2</jacksonDataBind>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>progbits</id>
+            <name>Progbits Repo</name>
+            <url>https://archiva.progbits.com/coffer/repository/internal/</url>
+        </repository>
+    </repositories>
+    
     <distributionManagement>
         <repository>
             <id>progbits</id>
