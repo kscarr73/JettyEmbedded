@@ -2,7 +2,7 @@
 
 A small class to create an Embedded Jetty that can serve jakarta.servlet classes.
 
-Documentation: [Table Of Contents](docs/Table%20Of%20Contents.md)
+[Full Documentation](docs/JettyEmbedded%20Documentation.md)
 
 # Example of Usage
 
