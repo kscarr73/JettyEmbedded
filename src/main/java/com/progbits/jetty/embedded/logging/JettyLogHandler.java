@@ -72,7 +72,7 @@ public class JettyLogHandler implements RequestLog {
         for (Enumeration<?> e = req.getHeaderNames(); e.hasMoreElements();) {
             String nextHeaderName = (String) e.nextElement();
 
-            if (!"authorization".equals(nextHeaderName)) {
+            if (!"authorization".equalsIgnoreCase(nextHeaderName)) {
                 msg.with("hdr_" + nextHeaderName, req.getHeader(nextHeaderName));
             }
         }
