@@ -26,6 +26,17 @@ public class JettyLogHandler implements RequestLog {
     private Thread logProcessor;
 
     public JettyLogHandler() {
+        configure();
+    }
+
+    public JettyLogHandler(String ignoreRegEx) {
+        if (ignoreRegEx != null) {
+            _ignoreRegEx = Pattern.compile(ignoreRegEx);
+        }
+        configure();
+    }
+
+    private void configure() {
         logProcessor = new Thread(() -> {
             while (true) {
                 try {
@@ -37,18 +48,12 @@ public class JettyLogHandler implements RequestLog {
                 }
             }
         });
-        
-        logProcessor.setDaemon(true);
-        logProcessor.setName("AccessLogProcessor-1");
-        logProcessor.start();
-    }
 
-    public JettyLogHandler(String ignoreRegEx) {
-        if (ignoreRegEx != null) {
-            _ignoreRegEx = Pattern.compile(ignoreRegEx);
-        }
+//        logProcessor.setDaemon(true);
+//        logProcessor.setName("AccessLogProcessor-1");
+//        logProcessor.start();
     }
-
+    
     @Override
     public void log(Request req, Response resp) {
         MapMessage msg = new MapMessage()
@@ -79,7 +84,7 @@ public class JettyLogHandler implements RequestLog {
         }
 
         if (_ignoreRegEx == null || !_ignoreRegEx.matcher(req.getRequestURI()).matches()) {
-            logEntries.add(msg);
+            log.info(msg);
         }
     }
 
