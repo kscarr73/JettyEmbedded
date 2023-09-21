@@ -12,7 +12,7 @@
 			"field": "message"
 		},
 		"stacktrace": {
-			"$resolver": "exception",
+			"$resolver": "exceptionRootCause",
 			"field": "stackTrace",
 			"stackTrace": {
 				"stringified": true
